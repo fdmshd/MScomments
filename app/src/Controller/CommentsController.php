@@ -30,8 +30,10 @@ class CommentsController extends AbstractController
 
         $comment = new Comment();
         $comment->setText($request->text);
-        $comment->setDate(date('m/d/Y h:i:s a', time()));
+        $comment->setDate(date('d/m/Y h:i:s a', time()));
         $comment->setUserid($request->user_id);
+        $comment->setObjectId($request->object_id);
+        $comment->setObjectName($request->object_name);
 
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
@@ -44,7 +46,9 @@ class CommentsController extends AbstractController
                 'id'=> $comment->getId(),
                 'text' => $comment->getText(),
                 'date' => $comment->getDate(),
-                'user_id'=>$comment->getUserid()
+                'user_id'=>$comment->getUserid(),
+                'object_name' => $comment->getObjectName(),
+                'object_id'=>$comment->getObjectName()
             ]),200);
         }
 

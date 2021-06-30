@@ -32,6 +32,16 @@ class Comment
      */
     private $user_id;
 
+    /**
+     * @ORM\Column(type="string", length=50)
+     */
+    private $object_name;
+
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $object_id;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -69,6 +79,30 @@ class Comment
     public function setUserid(int $user_id): self
     {
         $this->user_id = $user_id;
+
+        return $this;
+    }
+
+    public function getObjectName(): ?string
+    {
+        return $this->object_name;
+    }
+
+    public function setObjectName(string $object_name): self
+    {
+        $this->object_name = $object_name;
+
+        return $this;
+    }
+
+    public function getObjectId(): ?int
+    {
+        return $this->object_id;
+    }
+
+    public function setObjectId(int $object_id): self
+    {
+        $this->object_id = $object_id;
 
         return $this;
     }
