@@ -1,0 +1,53 @@
+version:  '3.7'
+
+services:
+  php_comments:
+    container_name: php_comments
+    build: dockerfile/php
+    restart: on-failure
+    expose:
+      - "9000"
+    volumes:
+      - ../app:/var/www/html
+      - ../app/vendor:/var/www/html/vendor
+    links:
+      - mysql_comments
+
+  nginx_comments:
+    container_name: nginx_comments
+    image: nginx:latest
+    restart: on-failure
+    ports:
+      - "8000:80"
+    volumes:
+      - ../app:/var/www/html
+      - ./logs/nginx:/var/log/nginx
+      - ./config/nginx:/etc/nginx/conf.d
+    links:
+      - php_comments
+
+  mysql_comments:
+    container_name: mysql_comments
+    image: mysql:5.7
+    restart: on-failure
+#    ports:
+#      - "3300:3306"
+    expose:
+      - "3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_USER: ${DATABASE_USER}
+    volumes:
+      - ./db/comments:/var/lib/mysql
+
+  comments_storage:
+    container_name: comments_storage
+    image: motiv-eshop/app:latest
+    build: dockerfile/php
+    depends_on:
+      - mysql_comments
+    volumes:
+      - ../app:/var/www/html
+      - ../app/vendor:/var/www/html/vendor
+    restart: on-failure
+    command: [ "php", "bin/console"]
