@@ -17,32 +17,32 @@ class CommentsController extends AbstractController
      */
     public function list(Request $request):Response
     {
-        $criteria_array = array('object_name'=>$request->query->get('object_name'),
+        /*$criteria_array = array('object_name'=>$request->query->get('object_name'),
             'object_id'=>$request->query->get('object_id'));
         $comments = $this->getDoctrine()
             ->getRepository(Comment::class)
-            ->findBy($criteria_array);
-        return new Response($this->json($comments
-        ),200);
+            ->findBy($criteria_array);*/
+        $comments = $this->getDoctrine()->getRepository(Comment::class)->findAll();
+        return new Response(json_encode($comments)
+        ,200);
     }
     /**
-     * @Route("/comments/{id}", name="comment_show")
+     * @Route("/comments/{id}", name="comment_show",requirements={"id"="\d+"})
      */
-    public function show(Request $request): Response
+    public function show(Request $request,$id): Response
     {
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
-            ->find($request->query->get('id'));
-        return new Response($this->json($comment
-        ),200);
-       /* return new Response($this->json([
+            ->find($id);
+
+        return new Response($this->json([
             'id'=> $comment->getId(),
             'text' => $comment->getText(),
             'date' => $comment->getDate(),
             'user_id'=>$comment->getUserid(),
             'object_name' => $comment->getObjectName(),
-            'object_id'=>$comment->getObjectName()
-        ]),200);*/
+            'object_id'=>$comment->getObjectId()
+        ]),200);
     }
     /**
      * @Route("/comments/create", name="comment_create")
@@ -53,7 +53,7 @@ class CommentsController extends AbstractController
 
         $comment = new Comment();
         $comment->setText($request->request->get('text'));
-        $comment->setDate(date('d/m/Y h:i:s a', time()));
+        $comment->setDate(new \DateTime());
         $comment->setUserid($request->request->get('user_id'));
         $comment->setObjectId($request->request->get('object_id'));
         $comment->setObjectName($request->request->get('object_name'));
@@ -77,14 +77,14 @@ class CommentsController extends AbstractController
 
     }
     /**
-     * @Route("/comments/{id}/update", name="comment_update")
+     * @Route("/comments/update/{id}", name="comment_update",requirements={"id"="\d+"})
      */
-    public function update(Request $request, ValidatorInterface $validator):Response
+    public function update(Request $request, ValidatorInterface $validator,$id):Response
     {
         $entityManager = $this->getDoctrine()->getManager();
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
-            ->find($request->request->get('id'));
+            ->find($id);
 
         $comment->setText($request->request->get('text'));
         $comment->setUserid($request->request->get('user_id'));
@@ -107,14 +107,14 @@ class CommentsController extends AbstractController
         }
     }
     /**
-     * @Route("/comments/{id}/delete", name="comment_delete")
+     * @Route("/comments/delete/{id}", name="comment_delete",requirements={"id"="\d+"})
      */
-    public function delete(Request $request):Response
+    public function delete(Request $request,$id):Response
     {
         $entityManager = $this->getDoctrine()->getManager();
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
-            ->find($request->request->get('id'));
+            ->find($id);
         if($comment){
             $entityManager->remove($comment);
             $entityManager->flush();

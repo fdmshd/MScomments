@@ -9,16 +9,19 @@ $collection->add('comments', new Route('/comments', array(
 )));
 $collection->add('comment_show', new Route('/comments/{id}', array(
     '_controller' => [CommentsController::class, 'show']
-)));
-$collection->add('comment_update', new Route('/comments/{id}/update', array(
+), array(
+    'id' => '\d+')));
+$collection->add('comment_update', new Route('/comments/update/{id}', array(
     '_controller' => [CommentsController::class, 'update']
-)));
+), array(
+    'id' => '\d+')));
 $collection->add('comment_create', new Route('/comments/create', array(
     '_controller' => [CommentsController::class, 'create']
 )));
-$collection->add('comment_delete', new Route('/comments/{id}/delete}', array(
-    '_controller' => [CommentsController::class, 'delete']
-)));
+$collection->add('comment_delete', new Route('/comments/delete/{id}', array(
+    '_controller' => [CommentsController::class, 'delete'],
+), array(
+    'id' => '\d+')));
 
 
 return $collection;
