@@ -2,9 +2,11 @@
 
 namespace App\Controller;
 
+use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\Comment;
+use App\Service\NormalizeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,35 +16,32 @@ class CommentsController extends AbstractController
 {
     /**
      * @Route("/comments", name="comments")
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function list(Request $request):Response
     {
-        /*$criteria_array = array('object_name'=>$request->query->get('object_name'),
-            'object_id'=>$request->query->get('object_id'));
+        //$this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $object_id=$request->query->get('object_id');
+        $object_name=$request->query->get('object_name');
         $comments = $this->getDoctrine()
             ->getRepository(Comment::class)
-            ->findBy($criteria_array);*/
-        $comments = $this->getDoctrine()->getRepository(Comment::class)->findAll();
-        return new Response(json_encode($comments)
-        ,200);
+            ->findBy(array('object_id'=>$object_id,'object_name'=>$object_name));
+            $data=(new NormalizeService())->normalizeByGroup($comments);
+
+        return new Response($this->json($data),200);
     }
+
     /**
      * @Route("/comments/{id}", name="comment_show",requirements={"id"="\d+"})
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function show(Request $request,$id): Response
     {
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
             ->find($id);
-
-        return new Response($this->json([
-            'id'=> $comment->getId(),
-            'text' => $comment->getText(),
-            'date' => $comment->getDate(),
-            'user_id'=>$comment->getUserid(),
-            'object_name' => $comment->getObjectName(),
-            'object_id'=>$comment->getObjectId()
-        ]),200);
+        $data=(new NormalizeService())->normalizeByGroup($comment);
+        return new Response($this->json($data),200);
     }
     /**
      * @Route("/comments/create", name="comment_create")
@@ -65,14 +64,7 @@ class CommentsController extends AbstractController
         else{
             $entityManager->persist($comment);
             $entityManager->flush();
-            return new Response($this->json([
-                'id'=> $comment->getId(),
-                'text' => $comment->getText(),
-                'date' => $comment->getDate(),
-                'user_id'=>$comment->getUserid(),
-                'object_name' => $comment->getObjectName(),
-                'object_id'=>$comment->getObjectName()
-            ]),201);
+            return new Response($this->json($comment),201);
         }
 
     }
@@ -96,14 +88,7 @@ class CommentsController extends AbstractController
         }
         else{
             $entityManager->flush();
-            return new Response($this->json([
-                'id'=> $comment->getId(),
-                'text' => $comment->getText(),
-                'date' => $comment->getDate(),
-                'user_id'=>$comment->getUserid(),
-                'object_name' => $comment->getObjectName(),
-                'object_id'=>$comment->getObjectName()
-            ]),200);
+            return new Response($this->json($comment),200);
         }
     }
     /**

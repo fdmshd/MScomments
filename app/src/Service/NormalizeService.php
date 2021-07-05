@@ -19,6 +19,9 @@ class NormalizeService
         };
     }
 
+    /**
+     * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
+     */
     public function normalizeByGroup($object, $groups = ['groups' => 'main']) {
         $classMetadataFactory = new ClassMetadataFactory(new AnnotationLoader(new AnnotationReader()));
         $serializer = new Serializer([new ObjectNormalizer($classMetadataFactory)]);
@@ -26,7 +29,7 @@ class NormalizeService
         return $serializer->normalize($object, null, [
             'groups' => $groups['groups'],
             AbstractNormalizer::CALLBACKS => [
-                'moment' => $this->datetimeFormat,
+                'date' => $this->datetimeFormat,
             ],
         ]);
     }
