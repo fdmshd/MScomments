@@ -36,9 +36,11 @@ services:
       - "3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
       MYSQL_USER: ${DATABASE_USER}
     volumes:
-      - ./db/comments:/var/lib/mysql
+      - ./db/comment:/var/lib/mysql
 
   comments_storage:
     container_name: comments_storage
