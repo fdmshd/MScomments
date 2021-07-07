@@ -2,15 +2,19 @@
 
 namespace App\Controller;
 
+use App\Repository\CommentRepository;
 use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use App\Entity\Comment;
 use App\Service\NormalizeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 class CommentsController extends AbstractController
 {
@@ -18,15 +22,25 @@ class CommentsController extends AbstractController
      * @Route("/comments", name="comments")
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
-    public function list(Request $request):Response
+    public function list(CommentRepository $commentRepository, Request $request):Response
     {
         //$this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $entityManager = $this->getDoctrine()->getManager();
+
         $object_id=$request->query->get('object_id');
         $object_name=$request->query->get('object_name');
-        $comments = $this->getDoctrine()
+        $order = $request->query->get('order','DESC');
+        $page = $request->query->getInt('page',1);
+        $limit = $request->query->getInt('limit',10);
+        if(!in_array($order,['ASC', 'DESC'], true)){
+            return $this->json(['Incorrect order. Only ASC or DESC are allowed.'],400);
+        }
+
+        /*$comments = $this->getDoctrine()
             ->getRepository(Comment::class)
-            ->findBy(array('object_id'=>$object_id,'object_name'=>$object_name));
-            $data=(new NormalizeService())->normalizeByGroup($comments);
+            ->findBy(array('object_id'=>$object_id,'object_name'=>$object_name));*/
+        $comments=$commentRepository->findComments($page,$limit,$object_id,$object_name,$order);
+        $data=(new NormalizeService())->normalizeByGroup($comments);
 
         return new Response($this->json($data),200);
     }
@@ -45,11 +59,11 @@ class CommentsController extends AbstractController
     }
     /**
      * @Route("/comments/create", name="comment_create")
+     * @IsGranted("ROLE_USER")
      */
     public function create(Request $request,ValidatorInterface $validator):Response
     {
         $entityManager = $this->getDoctrine()->getManager();
-
         $comment = new Comment();
         $comment->setText($request->request->get('text'));
         $comment->setDate(new \DateTime());
@@ -70,13 +84,20 @@ class CommentsController extends AbstractController
     }
     /**
      * @Route("/comments/update/{id}", name="comment_update",requirements={"id"="\d+"})
+     * @IsGranted("ROLE_USER")
      */
     public function update(Request $request, ValidatorInterface $validator,$id):Response
     {
+
         $entityManager = $this->getDoctrine()->getManager();
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
             ->find($id);
+        $user = $this->getUser();
+        if($user instanceof User and $user->getId()!==$comment->getUserId())
+        {
+            $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        }
 
         $comment->setText($request->request->get('text'));
         $comment->setUserid($request->request->get('user_id'));
@@ -93,6 +114,7 @@ class CommentsController extends AbstractController
     }
     /**
      * @Route("/comments/delete/{id}", name="comment_delete",requirements={"id"="\d+"})
+     * @IsGranted("ROLE_USER")
      */
     public function delete(Request $request,$id):Response
     {
@@ -100,6 +122,11 @@ class CommentsController extends AbstractController
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
             ->find($id);
+        $user = $this->getUser();
+        if($user instanceof User and $user->getId()!==$comment->getUserId())
+        {
+            $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        }
         if($comment){
             $entityManager->remove($comment);
             $entityManager->flush();
