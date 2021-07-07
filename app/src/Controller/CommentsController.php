@@ -24,9 +24,8 @@ class CommentsController extends AbstractController
      */
     public function list(CommentRepository $commentRepository, Request $request):Response
     {
-        //$this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         $entityManager = $this->getDoctrine()->getManager();
-
         $object_id=$request->query->get('object_id');
         $object_name=$request->query->get('object_name');
         $order = $request->query->get('order','DESC');
@@ -35,10 +34,6 @@ class CommentsController extends AbstractController
         if(!in_array($order,['ASC', 'DESC'], true)){
             return $this->json(['Incorrect order. Only ASC or DESC are allowed.'],400);
         }
-
-        /*$comments = $this->getDoctrine()
-            ->getRepository(Comment::class)
-            ->findBy(array('object_id'=>$object_id,'object_name'=>$object_name));*/
         $comments=$commentRepository->findComments($page,$limit,$object_id,$object_name,$order);
         $data=(new NormalizeService())->normalizeByGroup($comments);
 
@@ -51,6 +46,7 @@ class CommentsController extends AbstractController
      */
     public function show(Request $request,$id): Response
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
             ->find($id);
@@ -59,18 +55,19 @@ class CommentsController extends AbstractController
     }
     /**
      * @Route("/comments/create", name="comment_create")
-     * @IsGranted("ROLE_USER")
      */
     public function create(Request $request,ValidatorInterface $validator):Response
     {
+        $this->denyAccessUnlessGranted('IS_AUTHENTICATED_FULLY');
+        $user = $this->getUser();
         $entityManager = $this->getDoctrine()->getManager();
         $comment = new Comment();
         $comment->setText($request->request->get('text'));
         $comment->setDate(new \DateTime());
-        $comment->setUserid($request->request->get('user_id'));
+        $comment->setUserid($user->getId());
         $comment->setObjectId($request->request->get('object_id'));
         $comment->setObjectName($request->request->get('object_name'));
-
+        dump($user);
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
             return new Response((string) $errors, 400);
@@ -84,7 +81,7 @@ class CommentsController extends AbstractController
     }
     /**
      * @Route("/comments/update/{id}", name="comment_update",requirements={"id"="\d+"})
-     * @IsGranted("ROLE_USER")
+     *@IsGranted("ROLE_USER")
      */
     public function update(Request $request, ValidatorInterface $validator,$id):Response
     {
