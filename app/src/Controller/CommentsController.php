@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Repository\CommentRepository;
-use Doctrine\Common\Collections\Criteria;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,7 +18,7 @@ use Doctrine\ORM\Tools\Pagination\Paginator;
 class CommentsController extends AbstractController
 {
     /**
-     * @Route("/comments", name="comments")
+     * @Route("/comments", name="comments",methods={"GET"})
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function list(CommentRepository $commentRepository, Request $request):Response
@@ -41,7 +40,7 @@ class CommentsController extends AbstractController
     }
 
     /**
-     * @Route("/comments/{id}", name="comment_show",requirements={"id"="\d+"})
+     * @Route("/comments/{id}", name="comment_show",requirements={"id"="\d+"},methods={"GET"})
      * @throws \Symfony\Component\Serializer\Exception\ExceptionInterface
      */
     public function show(Request $request,$id): Response
@@ -55,7 +54,7 @@ class CommentsController extends AbstractController
         return new Response($this->json($data),200);
     }
     /**
-     * @Route("/comments/create", name="comment_create")
+     * @Route("/comments/create", name="comment_create",methods={"POST"})
      */
     public function create(Request $request,ValidatorInterface $validator):Response
     {
@@ -81,8 +80,8 @@ class CommentsController extends AbstractController
 
     }
     /**
-     * @Route("/comments/update/{id}", name="comment_update",requirements={"id"="\d+"})
-     *@IsGranted("ROLE_USER")
+     * @Route("/comments/update/{id}", name="comment_update",requirements={"id"="\d+"},methods={"PUT"})
+     * @IsGranted("ROLE_USER")
      */
     public function update(Request $request, ValidatorInterface $validator,$id):Response
     {
@@ -96,8 +95,9 @@ class CommentsController extends AbstractController
         {
             $this->denyAccessUnlessGranted('ROLE_ADMIN');
         }
+        $decoded_request=json_decode($request->getContent());
 
-        $comment->setText($request->request->get('text'));
+        $comment->setText($decoded_request->text);
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
             return new Response($this->json(['errors'=>$errors]), 400);
@@ -108,7 +108,7 @@ class CommentsController extends AbstractController
         }
     }
     /**
-     * @Route("/comments/delete/{id}", name="comment_delete",requirements={"id"="\d+"})
+     * @Route("/comments/delete/{id}", name="comment_delete",requirements={"id"="\d+"},methods={"DELETE"})
      * @IsGranted("ROLE_USER")
      */
     public function delete(Request $request,$id):Response
