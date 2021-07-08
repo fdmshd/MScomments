@@ -126,6 +126,6 @@ class CommentsController extends AbstractController
             $entityManager->remove($comment);
             $entityManager->flush();
         }
-        return new Response(null, 204);
+        return new Response($this->json(['message'=>'Content successfully removed']), 200);
     }
 }
