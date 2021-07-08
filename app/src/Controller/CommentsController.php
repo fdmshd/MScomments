@@ -50,6 +50,7 @@ class CommentsController extends AbstractController
         $comment = $this->getDoctrine()
             ->getRepository(Comment::class)
             ->find($id);
+
         $data=(new NormalizeService())->normalizeByGroup($comment);
         return new Response($this->json($data),200);
     }
@@ -65,9 +66,9 @@ class CommentsController extends AbstractController
         $comment->setText($request->request->get('text'));
         $comment->setDate(new \DateTime());
         $comment->setUserid($user->getId());
+        $comment->setUserName($user->getUsername());
         $comment->setObjectId($request->request->get('object_id'));
         $comment->setObjectName($request->request->get('object_name'));
-        dump($user);
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
             return new Response((string) $errors, 400);
@@ -97,9 +98,6 @@ class CommentsController extends AbstractController
         }
 
         $comment->setText($request->request->get('text'));
-        $comment->setUserid($request->request->get('user_id'));
-        $comment->setObjectId($request->request->get('object_id'));
-        $comment->setObjectName($request->request->get('object_name'));
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
             return new Response($this->json(['errors'=>$errors]), 400);
