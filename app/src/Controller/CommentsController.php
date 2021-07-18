@@ -37,7 +37,7 @@ class CommentsController extends AbstractController
         $comments = $commentRepository->findComments($page, $limit, $object_id, $object_name, $order);
         $data = (new NormalizeService())->normalizeByGroup($comments);
 
-        return new Response($this->json($data), 200);
+        return new Response($this->json(['data'=>$data]), 200);
     }
 
     /**
@@ -52,7 +52,7 @@ class CommentsController extends AbstractController
             ->find($id);
 
         $data = (new NormalizeService())->normalizeByGroup($comment);
-        return new Response($this->json($data), 200);
+        return new Response($this->json(['data'=>$data]), 200);
     }
 
     /**
@@ -67,16 +67,16 @@ class CommentsController extends AbstractController
         $comment->setText($request->request->get('text'));
         $comment->setDate(new DateTime());
         $comment->setUserid($user->getId());
-        $comment->setUserName($user->getUsername());
         $comment->setObjectId($request->request->get('object_id'));
         $comment->setObjectName($request->request->get('object_name'));
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
-            return new Response((string)$errors, 400);
+            return new Response( $this->json(['message'=>$errors]), 400);
         } else {
             $entityManager->persist($comment);
             $entityManager->flush();
-            return new Response($this->json($comment), 201);
+            $data = (new NormalizeService())->normalizeByGroup($comment);
+            return new Response($this->json(['data'=>$data,'message'=>'comment successfully created']), 201);
         }
 
     }
@@ -101,10 +101,11 @@ class CommentsController extends AbstractController
         $comment->setText($decoded_request->text);
         $errors = $validator->validate($comment);
         if (count($errors) > 0) {
-            return new Response($this->json(['errors' => $errors]), 400);
+            return new Response($this->json(['message' => $errors]), 400);
         } else {
             $entityManager->flush();
-            return new Response($this->json($comment), 200);
+            $data = (new NormalizeService())->normalizeByGroup($comment);
+            return new Response($this->json(['data'=>$data,'message'=>'comment successfully updated']), 200);
         }
     }
 
@@ -112,7 +113,7 @@ class CommentsController extends AbstractController
      * @Route("/comments/{id}", name="comment_delete",requirements={"id"="\d+"},methods={"DELETE"})
      * @IsGranted("ROLE_USER")
      */
-    public function deleteComment(Request $request, $id): Response
+    public function deleteComment($id): Response
     {
         $entityManager = $this->getDoctrine()->getManager();
         $comment = $this->getDoctrine()
